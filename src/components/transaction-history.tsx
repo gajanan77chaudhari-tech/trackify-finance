@@ -18,6 +18,7 @@ import { TransactionForm } from './transaction-form';
 import { format, isSameDay } from 'date-fns';
 import { ArrowUpCircle, ArrowDownCircle, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface TransactionHistoryProps {
   isOpen: boolean;
@@ -36,12 +37,17 @@ export function TransactionHistory({
 }: TransactionHistoryProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedToDelete, setSelectedToDelete] = useState<Set<string>>(new Set());
 
   const sortedTransactions = useMemo(() => {
     return [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [transactions]);
+  
+  const allTransactionIds = useMemo(() => sortedTransactions.map(t => t.id), [sortedTransactions]);
 
   const handleEditClick = (transaction: Transaction) => {
+    if (isDeleteMode) return;
     setSelectedTransaction(transaction);
     setIsFormOpen(true);
   };
@@ -67,6 +73,33 @@ export function TransactionHistory({
     onOpenChange(false); // Close the sheet after deleting
   };
 
+  const toggleDeleteSelection = (id: string) => {
+    setSelectedToDelete(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+  
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedToDelete(new Set(allTransactionIds));
+    } else {
+      setSelectedToDelete(new Set());
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    const remainingTransactions = transactions.filter(t => !selectedToDelete.has(t.id));
+    onTransactionChange(remainingTransactions);
+    setSelectedToDelete(new Set());
+    setIsDeleteMode(false);
+  }
+
   const renderDateSeparator = (transaction: Transaction, index: number) => {
     if (index === 0) {
       return true;
@@ -77,14 +110,44 @@ export function TransactionHistory({
   
   return (
     <>
-      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <Sheet open={isOpen} onOpenChange={(open) => {
+          onOpenChange(open);
+          if (!open) {
+              setIsDeleteMode(false);
+              setSelectedToDelete(new Set());
+          }
+      }}>
         <SheetContent className="w-full sm:max-w-md flex flex-col">
-          <SheetHeader>
-            <SheetTitle>Transaction History</SheetTitle>
-            <SheetDescription>
-              A complete list of all your recorded transactions.
-            </SheetDescription>
+          <SheetHeader className="flex flex-row justify-between items-start">
+            <div>
+              <SheetTitle>Transaction History</SheetTitle>
+              <SheetDescription>
+                A complete list of all your recorded transactions.
+              </SheetDescription>
+            </div>
+            {sortedTransactions.length > 0 && (
+                <Button variant={isDeleteMode ? "secondary" : "ghost"} size="icon" className="w-8 h-8" onClick={() => {
+                    setIsDeleteMode(!isDeleteMode);
+                    setSelectedToDelete(new Set());
+                }}>
+                    <Trash2 className="w-4 h-4" />
+                </Button>
+            )}
           </SheetHeader>
+
+          {isDeleteMode && sortedTransactions.length > 0 && (
+            <div className="flex items-center space-x-2 py-2 border-b">
+              <Checkbox 
+                id="select-all" 
+                checked={selectedToDelete.size > 0 && selectedToDelete.size === sortedTransactions.length}
+                onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+              />
+              <label htmlFor="select-all" className="text-sm font-medium leading-none">
+                Select All ({selectedToDelete.size}/{sortedTransactions.length})
+              </label>
+            </div>
+          )}
+
           <ScrollArea className="flex-grow mt-4 pr-4">
             <div className="space-y-4">
               {sortedTransactions.map((transaction, index) => (
@@ -94,7 +157,14 @@ export function TransactionHistory({
                       {format(new Date(transaction.date), 'MMMM d, yyyy')}
                     </div>
                   )}
-                  <div className="flex items-center gap-4 group">
+                  <div className="flex items-center gap-4 group" onClick={() => isDeleteMode && toggleDeleteSelection(transaction.id)}>
+                    {isDeleteMode && (
+                      <Checkbox 
+                        checked={selectedToDelete.has(transaction.id)}
+                        onCheckedChange={() => toggleDeleteSelection(transaction.id)}
+                        className="mr-2"
+                      />
+                    )}
                     <div className="flex-shrink-0">
                       {transaction.type === 'income' ? (
                         <ArrowUpCircle className="w-6 h-6 text-green-500" />
@@ -126,7 +196,7 @@ export function TransactionHistory({
                         })}
                       </p>
                     </div>
-                    <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className={cn("flex opacity-0 group-hover:opacity-100 transition-opacity", isDeleteMode && "hidden")}>
                       <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => handleEditClick(transaction)}>
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -160,8 +230,34 @@ export function TransactionHistory({
               )}
             </div>
           </ScrollArea>
-          {sortedTransactions.length > 0 && (
-            <SheetFooter className="mt-auto pt-4 border-t">
+          
+          <SheetFooter className="mt-auto pt-4 border-t">
+              {isDeleteMode && selectedToDelete.size > 0 ? (
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                       <Button variant="destructive" className="w-full">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Selected ({selectedToDelete.size})
+                       </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete {selectedToDelete.size} transaction(s)?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the selected transactions.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteSelected}>Confirm Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+              ) : isDeleteMode ? (
+                  <Button variant="outline" className="w-full" onClick={() => setIsDeleteMode(false)}>
+                    Cancel
+                  </Button>
+              ) : sortedTransactions.length > 0 && (
                  <AlertDialog>
                     <AlertDialogTrigger asChild>
                        <Button variant="destructive" className="w-full">
@@ -182,8 +278,8 @@ export function TransactionHistory({
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+            )}
             </SheetFooter>
-          )}
         </SheetContent>
       </Sheet>
 
