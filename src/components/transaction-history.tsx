@@ -257,27 +257,8 @@ export function TransactionHistory({
                   <Button variant="outline" className="w-full" onClick={() => setIsDeleteMode(false)}>
                     Cancel
                   </Button>
-              ) : sortedTransactions.length > 0 && (
-                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                       <Button variant="destructive" className="w-full">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete All Transactions
-                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete All Transactions?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete all of your transaction history. Are you absolutely sure?
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteAll}>Delete All</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+              ) : (
+                null
             )}
             </SheetFooter>
         </SheetContent>
