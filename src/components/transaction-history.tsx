@@ -8,10 +8,11 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
+  SheetFooter
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { TransactionForm } from './transaction-form';
 import { format, isSameDay } from 'date-fns';
@@ -23,6 +24,7 @@ interface TransactionHistoryProps {
   onOpenChange: (isOpen: boolean) => void;
   transactions: Transaction[];
   onTransactionChange: (transactions: Transaction[]) => void;
+  onDeleteAll: () => void;
 }
 
 export function TransactionHistory({
@@ -30,6 +32,7 @@ export function TransactionHistory({
   onOpenChange,
   transactions,
   onTransactionChange,
+  onDeleteAll
 }: TransactionHistoryProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -58,6 +61,11 @@ export function TransactionHistory({
     setIsFormOpen(false);
     setSelectedTransaction(null);
   };
+  
+  const handleDeleteAll = () => {
+    onDeleteAll();
+    onOpenChange(false); // Close the sheet after deleting
+  };
 
   const renderDateSeparator = (transaction: Transaction, index: number) => {
     if (index === 0) {
@@ -70,14 +78,14 @@ export function TransactionHistory({
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-md">
+        <SheetContent className="w-full sm:max-w-md flex flex-col">
           <SheetHeader>
             <SheetTitle>Transaction History</SheetTitle>
             <SheetDescription>
               A complete list of all your recorded transactions.
             </SheetDescription>
           </SheetHeader>
-          <ScrollArea className="h-[calc(100vh-8rem)] mt-4 pr-4">
+          <ScrollArea className="flex-grow mt-4 pr-4">
             <div className="space-y-4">
               {sortedTransactions.map((transaction, index) => (
                 <div key={transaction.id}>
@@ -152,6 +160,30 @@ export function TransactionHistory({
               )}
             </div>
           </ScrollArea>
+          {sortedTransactions.length > 0 && (
+            <SheetFooter className="mt-auto pt-4 border-t">
+                 <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                       <Button variant="destructive" className="w-full">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete All Transactions
+                       </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete All Transactions?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete all of your transaction history. Are you absolutely sure?
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteAll}>Delete All</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+            </SheetFooter>
+          )}
         </SheetContent>
       </Sheet>
 

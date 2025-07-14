@@ -38,3 +38,9 @@ export async function deleteTransaction(id: string): Promise<boolean> {
     transactions = transactions.filter(t => t.id !== id);
     return Promise.resolve(transactions.length < initialLength);
 }
+
+export async function deleteAllTransactions(): Promise<boolean> {
+    // In a real DB, you would delete all documents in a collection.
+    transactions = [];
+    return Promise.resolve(true);
+}

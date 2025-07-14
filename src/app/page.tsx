@@ -6,7 +6,7 @@ import { Header } from '@/components/header';
 import { MonthlyOverview } from '@/components/monthly-overview';
 import { FinanceCalendar } from '@/components/finance-calendar';
 import { TransactionHistory } from '@/components/transaction-history';
-import { addTransaction, deleteTransaction, getTransactions, updateTransaction } from '@/services/db';
+import { addTransaction, deleteTransaction, getTransactions, updateTransaction, deleteAllTransactions } from '@/services/db';
 
 
 export default function Home() {
@@ -52,6 +52,12 @@ export default function Home() {
     setTransactions(fetchedTransactions);
   };
   
+  const handleDeleteAllTransactions = async () => {
+    await deleteAllTransactions();
+    const fetchedTransactions = await getTransactions();
+    setTransactions(fetchedTransactions);
+  }
+
     if (!isMounted) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -77,6 +83,7 @@ export default function Home() {
         onOpenChange={setIsHistoryOpen}
         transactions={transactions}
         onTransactionChange={handleTransactionChange}
+        onDeleteAll={handleDeleteAllTransactions}
       />
       <footer className="text-center p-4 text-muted-foreground text-sm">
         <p>Built with ❤️ for financial clarity.</p>
