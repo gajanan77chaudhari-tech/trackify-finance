@@ -34,7 +34,7 @@ export function TransactionHistory({
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
 
   const sortedTransactions = useMemo(() => {
-    return [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [transactions]);
 
   const handleEditClick = (transaction: Transaction) => {
