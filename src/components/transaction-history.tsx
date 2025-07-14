@@ -11,10 +11,11 @@ import {
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { TransactionForm } from './transaction-form';
 import { format, isSameDay } from 'date-fns';
-import { ArrowUpCircle, ArrowDownCircle, Edit } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TransactionHistoryProps {
@@ -117,9 +118,30 @@ export function TransactionHistory({
                         })}
                       </p>
                     </div>
-                    <Button variant="ghost" size="icon" className="w-8 h-8 opacity-0 group-hover:opacity-100" onClick={() => handleEditClick(transaction)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
+                    <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => handleEditClick(transaction)}>
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                           <Button variant="ghost" size="icon" className="w-8 h-8 text-destructive hover:text-destructive">
+                              <Trash2 className="w-4 h-4" />
+                           </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete this transaction.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
                 </div>
               ))}

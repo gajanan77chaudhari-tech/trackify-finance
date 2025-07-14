@@ -62,7 +62,7 @@ export function MonthlyOverview({ transactions, currentDate }: MonthlyOverviewPr
           </p>
         </CardContent>
       </Card>
-      <Card className={netProfit >= 0 ? 'bg-primary/10' : 'bg-destructive/10'}>
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Net Balance</CardTitle>
           <Wallet className="h-4 w-4 text-muted-foreground" />
