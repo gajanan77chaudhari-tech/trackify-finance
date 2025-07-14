@@ -29,11 +29,10 @@ export function MonthlyOverview({ transactions, currentDate }: MonthlyOverviewPr
   const netProfit = totalIncome - totalExpenses;
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+    const formattedAmount = new Intl.NumberFormat('en-IN', {
       maximumFractionDigits: 0,
     }).format(amount);
+    return `Rs. ${formattedAmount}`;
   };
 
   return (
