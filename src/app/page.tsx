@@ -6,15 +6,8 @@ import { Header } from '@/components/header';
 import { MonthlyOverview } from '@/components/monthly-overview';
 import { FinanceCalendar } from '@/components/finance-calendar';
 import { TransactionHistory } from '@/components/transaction-history';
+import { addTransaction, deleteTransaction, getTransactions, updateTransaction } from '@/services/db';
 
-// Mock data for initial state
-const initialTransactions: Transaction[] = [
-    { id: '1', date: new Date(new Date().setDate(2)).toISOString(), description: 'Salary', amount: 3500, type: 'income', tags: ['work', 'payroll'] },
-    { id: '2', date: new Date(new Date().setDate(2)).toISOString(), description: 'Rent', amount: 1200, type: 'expense', tags: ['housing'] },
-    { id: '3', date: new Date(new Date().setDate(5)).toISOString(), description: 'Groceries', amount: 150, type: 'expense', tags: ['food'] },
-    { id: '4', date: new Date(new Date().setDate(10)).toISOString(), description: 'Freelance Project', amount: 500, type: 'income', tags: ['side-hustle'] },
-    { id: '5', date: new Date(new Date().setDate(12)).toISOString(), description: 'Internet Bill', amount: 60, type: 'expense', tags: ['utilities'] },
-];
 
 export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -23,33 +16,43 @@ export default function Home() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
-    // Load from localStorage if available
-    try {
-      const savedTransactions = localStorage.getItem('transactions');
-      if (savedTransactions) {
-        setTransactions(JSON.parse(savedTransactions));
-      } else {
-        setTransactions(initialTransactions);
-      }
-    } catch (error) {
-      console.error("Could not parse transactions from localStorage", error);
-      setTransactions(initialTransactions);
+    async function loadTransactions() {
+      const fetchedTransactions = await getTransactions();
+      setTransactions(fetchedTransactions);
+      setIsMounted(true);
     }
+    loadTransactions();
   }, []);
 
-  useEffect(() => {
-    if(isMounted) {
-      // Save to localStorage whenever transactions change
-      localStorage.setItem('transactions', JSON.stringify(transactions));
+
+  const handleTransactionChange = async (newTransactions: Transaction[]) => {
+    // This function will now handle individual operations: add, update, delete
+    const oldIds = new Set(transactions.map(t => t.id));
+    const newIds = new Set(newTransactions.map(t => t.id));
+
+    // Handle deletions
+    for (const oldTx of transactions) {
+      if (!newIds.has(oldTx.id)) {
+        await deleteTransaction(oldTx.id);
+      }
     }
-  }, [transactions, isMounted]);
 
-  const handleTransactionChange = (newTransactions: Transaction[]) => {
-    setTransactions(newTransactions);
+    // Handle additions and updates
+    for (const newTx of newTransactions) {
+      if (!oldIds.has(newTx.id)) {
+        await addTransaction(newTx); // Add new
+      } else {
+        const oldTx = transactions.find(t => t.id === newTx.id);
+        if (oldTx && JSON.stringify(oldTx) !== JSON.stringify(newTx)) {
+            await updateTransaction(newTx.id, newTx); // Update existing
+        }
+      }
+    }
+    const fetchedTransactions = await getTransactions();
+    setTransactions(fetchedTransactions);
   };
-
-  if (!isMounted) {
+  
+    if (!isMounted) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-xl font-headline">Loading Trackify Finance...</div>
