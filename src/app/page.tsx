@@ -5,6 +5,7 @@ import { type Transaction } from '@/types';
 import { Header } from '@/components/header';
 import { MonthlyOverview } from '@/components/monthly-overview';
 import { FinanceCalendar } from '@/components/finance-calendar';
+import { TransactionHistory } from '@/components/transaction-history';
 
 // Mock data for initial state
 const initialTransactions: Transaction[] = [
@@ -19,6 +20,7 @@ export default function Home() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isMounted, setIsMounted] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -43,6 +45,10 @@ export default function Home() {
     }
   }, [transactions, isMounted]);
 
+  const handleTransactionChange = (newTransactions: Transaction[]) => {
+    setTransactions(newTransactions);
+  };
+
   if (!isMounted) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -53,16 +59,22 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <Header />
+      <Header onHistoryClick={() => setIsHistoryOpen(true)} />
       <main className="container mx-auto p-4 md:p-8 flex-grow">
         <MonthlyOverview transactions={transactions} currentDate={currentDate} />
         <FinanceCalendar
           transactions={transactions}
-          onTransactionChange={setTransactions}
+          onTransactionChange={handleTransactionChange}
           currentDate={currentDate}
           setCurrentDate={setCurrentDate}
         />
       </main>
+      <TransactionHistory 
+        isOpen={isHistoryOpen}
+        onOpenChange={setIsHistoryOpen}
+        transactions={transactions}
+        onTransactionChange={handleTransactionChange}
+      />
       <footer className="text-center p-4 text-muted-foreground text-sm">
         <p>Built with ❤️ for financial clarity.</p>
       </footer>

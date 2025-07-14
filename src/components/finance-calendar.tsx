@@ -7,7 +7,6 @@ import {
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
-  getDay,
   isSameDay,
   add,
   sub,
@@ -114,13 +113,16 @@ export function FinanceCalendar({ transactions, onTransactionChange, currentDate
 
                 {dailyTransactions.length > 0 && (
                   <div className="mt-1 flex-grow overflow-y-auto text-xs space-y-1">
-                      {dailyTransactions.map(t => (
+                      {dailyTransactions.slice(0, 3).map(t => (
                           <div key={t.id} onClick={() => openDialog(day, t)} className="cursor-pointer flex items-center gap-1 p-1 rounded hover:bg-accent/20">
                              {t.type === 'income' ? <ArrowUpCircle className="w-3 h-3 text-green-500 shrink-0" /> : <ArrowDownCircle className="w-3 h-3 text-red-500 shrink-0" />}
                              <span className="truncate flex-1">{t.description}</span>
                              <span className="font-mono">{t.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                           </div>
                       ))}
+                      {dailyTransactions.length > 3 && (
+                        <div className="text-muted-foreground text-center text-[10px] p-1">...and {dailyTransactions.length - 3} more</div>
+                      )}
                   </div>
                 )}
                 

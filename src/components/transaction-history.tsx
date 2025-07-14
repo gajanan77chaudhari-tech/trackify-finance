@@ -1,0 +1,153 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { type Transaction } from '@/types';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { TransactionForm } from './transaction-form';
+import { format, isSameDay } from 'date-fns';
+import { ArrowUpCircle, ArrowDownCircle, Edit } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface TransactionHistoryProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  transactions: Transaction[];
+  onTransactionChange: (transactions: Transaction[]) => void;
+}
+
+export function TransactionHistory({
+  isOpen,
+  onOpenChange,
+  transactions,
+  onTransactionChange,
+}: TransactionHistoryProps) {
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+
+  const sortedTransactions = useMemo(() => {
+    return [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [transactions]);
+
+  const handleEditClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsFormOpen(true);
+  };
+
+  const handleSaveTransaction = (transaction: Transaction) => {
+    const isEditing = transactions.some(t => t.id === transaction.id);
+    const newTransactions = isEditing
+      ? transactions.map(t => (t.id === transaction.id ? transaction : t))
+      : [...transactions, transaction];
+    onTransactionChange(newTransactions);
+    setIsFormOpen(false);
+    setSelectedTransaction(null);
+  };
+
+  const handleDeleteTransaction = (transactionId: string) => {
+    onTransactionChange(transactions.filter(t => t.id !== transactionId));
+    setIsFormOpen(false);
+    setSelectedTransaction(null);
+  };
+
+  const renderDateSeparator = (transaction: Transaction, index: number) => {
+    if (index === 0) {
+      return true;
+    }
+    const prevTransaction = sortedTransactions[index - 1];
+    return !isSameDay(new Date(transaction.date), new Date(prevTransaction.date));
+  };
+  
+  return (
+    <>
+      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+        <SheetContent className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Transaction History</SheetTitle>
+            <SheetDescription>
+              A complete list of all your recorded transactions.
+            </SheetDescription>
+          </SheetHeader>
+          <ScrollArea className="h-[calc(100vh-8rem)] mt-4 pr-4">
+            <div className="space-y-4">
+              {sortedTransactions.map((transaction, index) => (
+                <div key={transaction.id}>
+                  {renderDateSeparator(transaction, index) && (
+                    <div className="font-bold text-lg sticky top-0 bg-background py-2 my-2 border-b">
+                      {format(new Date(transaction.date), 'MMMM d, yyyy')}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-4 group">
+                    <div className="flex-shrink-0">
+                      {transaction.type === 'income' ? (
+                        <ArrowUpCircle className="w-6 h-6 text-green-500" />
+                      ) : (
+                        <ArrowDownCircle className="w-6 h-6 text-red-500" />
+                      )}
+                    </div>
+                    <div className="flex-grow">
+                      <p className="font-medium">{transaction.description}</p>
+                      <div className="flex gap-1 flex-wrap mt-1">
+                        {transaction.tags.map(tag => (
+                            <span key={tag} className="text-xs px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground">{tag}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p
+                        className={cn(
+                          'font-mono font-semibold',
+                          transaction.type === 'income'
+                            ? 'text-green-500'
+                            : 'text-red-500'
+                        )}
+                      >
+                        {transaction.type === 'income' ? '+' : '-'}
+                        {transaction.amount.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="icon" className="w-8 h-8 opacity-0 group-hover:opacity-100" onClick={() => handleEditClick(transaction)}>
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              {sortedTransactions.length === 0 && (
+                <p className="text-center text-muted-foreground py-8">
+                  No transactions found.
+                </p>
+              )}
+            </div>
+          </ScrollArea>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Transaction</DialogTitle>
+          </DialogHeader>
+          {selectedTransaction && (
+            <TransactionForm
+              date={new Date(selectedTransaction.date)}
+              onSave={handleSaveTransaction}
+              existingTransaction={selectedTransaction}
+              onDelete={selectedTransaction ? () => handleDeleteTransaction(selectedTransaction.id) : undefined}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
