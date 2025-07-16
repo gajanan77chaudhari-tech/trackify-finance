@@ -99,13 +99,16 @@ export function FinanceCalendar({ transactions, onTransactionChange, currentDate
               <div
                 key={day.toString()}
                 className={cn(
-                  'relative p-2 border-r border-b flex flex-col min-h-[120px] md:min-h-[140px] group transition-colors hover:bg-muted/50',
+                  'relative p-2 border-r border-b flex flex-col min-h-[120px] md:min-h-[140px] group transition-colors hover:bg-accent',
                   !isSameMonth(day, currentDate) && 'text-muted-foreground bg-muted/20',
-                  isToday(day) && 'bg-accent/10'
+                  isToday(day) && 'bg-blue-100 dark:bg-blue-900/30'
                 )}
               >
                 <div className="flex justify-between items-start">
-                  <span className={cn("text-sm font-bold", isToday(day) && "text-accent-foreground bg-accent rounded-full w-6 h-6 flex items-center justify-center")}>{format(day, 'd')}</span>
+                  <span className={cn(
+                    "text-sm font-semibold", 
+                     isToday(day) ? "text-primary-foreground bg-primary rounded-full w-6 h-6 flex items-center justify-center" : "text-foreground"
+                    )}>{format(day, 'd')}</span>
                   <Button variant="ghost" size="icon" className="w-6 h-6 opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => openDialog(day)}>
                     <PlusCircle className="w-4 h-4" />
                   </Button>
