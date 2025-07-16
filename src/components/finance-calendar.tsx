@@ -120,13 +120,13 @@ export function FinanceCalendar({ transactions, onTransactionChange, currentDate
                 className={cn(
                   'relative p-2 border-r border-b flex flex-col min-h-[120px] md:min-h-[100px] group transition-colors hover:bg-accent cursor-pointer',
                   !isSameMonth(day, currentDate) && 'text-muted-foreground bg-muted/20',
-                  isToday(day) && 'bg-blue-100 dark:bg-blue-900/30'
+                  isToday(day) && 'bg-green-100 dark:bg-green-900/30'
                 )}
               >
                 <div className="flex justify-between items-start">
                   <span className={cn(
                     "text-sm font-semibold", 
-                     isToday(day) ? "text-primary-foreground bg-primary rounded-full w-6 h-6 flex items-center justify-center" : "text-foreground"
+                     isToday(day) ? "text-white bg-green-500 rounded-full w-6 h-6 flex items-center justify-center" : "text-foreground"
                     )}>{format(day, 'd')}</span>
                 </div>
                 {dailyTransactions.length > 0 && (
