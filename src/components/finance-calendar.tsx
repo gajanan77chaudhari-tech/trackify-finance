@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -17,10 +18,12 @@ import {
 } from 'date-fns';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { ChevronLeft, ChevronRight, PlusCircle, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, PlusCircle, ArrowUpCircle, ArrowDownCircle, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { TransactionForm } from './transaction-form';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 interface FinanceCalendarProps {
   transactions: Transaction[];
@@ -32,7 +35,8 @@ interface FinanceCalendarProps {
 export function FinanceCalendar({ transactions, onTransactionChange, currentDate, setCurrentDate }: FinanceCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isListOpen, setIsListOpen] = useState(false);
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -50,19 +54,35 @@ export function FinanceCalendar({ transactions, onTransactionChange, currentDate
       ? transactions.map(t => (t.id === transaction.id ? transaction : t))
       : [...transactions, transaction];
     onTransactionChange(newTransactions);
-    setIsDialogOpen(false);
+    setIsFormOpen(false);
   };
   
   const handleDeleteTransaction = (transactionId: string) => {
     onTransactionChange(transactions.filter(t => t.id !== transactionId));
-    setIsDialogOpen(false);
+    setIsFormOpen(false);
   };
 
-  const openDialog = (date: Date, transaction: Transaction | null = null) => {
+  const openFormDialog = (date: Date, transaction: Transaction | null = null) => {
     setSelectedDate(date);
     setSelectedTransaction(transaction);
-    setIsDialogOpen(true);
+    setIsListOpen(false); // Close list if open
+    setIsFormOpen(true);
   };
+
+  const handleDayClick = (day: Date) => {
+    setSelectedDate(day);
+    setIsListOpen(true);
+  };
+  
+  const closeListAndOpenForm = () => {
+      if (selectedDate) {
+          openFormDialog(selectedDate, null);
+      }
+  }
+
+  const dailyTransactionsForSelectedDate = selectedDate
+    ? transactions.filter(t => isSameDay(new Date(t.date), selectedDate as Date))
+    : [];
 
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -92,14 +112,13 @@ export function FinanceCalendar({ transactions, onTransactionChange, currentDate
         <div className="grid grid-cols-7 auto-rows-auto">
           {days.map(day => {
             const dailyTransactions = transactions.filter(t => isSameDay(new Date(t.date), day));
-            const dailyIncome = dailyTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-            const dailyExpense = dailyTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-
+            
             return (
               <div
                 key={day.toString()}
+                onClick={() => handleDayClick(day)}
                 className={cn(
-                  'relative p-2 border-r border-b flex flex-col min-h-[120px] md:min-h-[140px] group transition-colors hover:bg-accent',
+                  'relative p-2 border-r border-b flex flex-col min-h-[120px] md:min-h-[100px] group transition-colors hover:bg-accent cursor-pointer',
                   !isSameMonth(day, currentDate) && 'text-muted-foreground bg-muted/20',
                   isToday(day) && 'bg-blue-100 dark:bg-blue-900/30'
                 )}
@@ -109,31 +128,9 @@ export function FinanceCalendar({ transactions, onTransactionChange, currentDate
                     "text-sm font-semibold", 
                      isToday(day) ? "text-primary-foreground bg-primary rounded-full w-6 h-6 flex items-center justify-center" : "text-foreground"
                     )}>{format(day, 'd')}</span>
-                  <Button variant="ghost" size="icon" className="w-6 h-6 opacity-0 group-hover:opacity-100 focus:opacity-100" onClick={() => openDialog(day)}>
-                    <PlusCircle className="w-4 h-4" />
-                  </Button>
                 </div>
-
                 {dailyTransactions.length > 0 && (
-                  <div className="mt-1 flex-grow overflow-y-auto text-xs space-y-1">
-                      {dailyTransactions.slice(0, 3).map(t => (
-                          <div key={t.id} onClick={() => openDialog(day, t)} className="cursor-pointer flex items-center gap-1 p-1 rounded hover:bg-accent/20">
-                             {t.type === 'income' ? <ArrowUpCircle className="w-3 h-3 text-green-500 shrink-0" /> : <ArrowDownCircle className="w-3 h-3 text-red-500 shrink-0" />}
-                             <span className="truncate flex-1">{t.description}</span>
-                             <span className="font-mono">{t.amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                          </div>
-                      ))}
-                      {dailyTransactions.length > 3 && (
-                        <div className="text-muted-foreground text-center text-[10px] p-1">...and {dailyTransactions.length - 3} more</div>
-                      )}
-                  </div>
-                )}
-                
-                {(dailyIncome > 0 || dailyExpense > 0) && (
-                  <div className="mt-auto pt-1 text-[10px] text-right space-y-0.5">
-                    {dailyIncome > 0 && <div className="text-green-500 font-semibold leading-none">+{dailyIncome.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>}
-                    {dailyExpense > 0 && <div className="text-red-500 font-semibold leading-none">-{dailyExpense.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>}
-                  </div>
+                    <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-primary"></div>
                 )}
               </div>
             );
@@ -141,10 +138,72 @@ export function FinanceCalendar({ transactions, onTransactionChange, currentDate
         </div>
       </Card>
       
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isListOpen} onOpenChange={setIsListOpen}>
+        <DialogContent className="max-h-[80vh] flex flex-col">
+            <DialogHeader>
+                <DialogTitle>Transactions for {selectedDate && format(selectedDate, 'MMMM d, yyyy')}</DialogTitle>
+                <DialogDescription>
+                    {dailyTransactionsForSelectedDate.length > 0 ? `You have ${dailyTransactionsForSelectedDate.length} transaction(s) on this date.` : 'No transactions for this date.'}
+                </DialogDescription>
+            </DialogHeader>
+            <div className="flex-grow overflow-y-auto pr-4 -mr-4 space-y-3">
+              {dailyTransactionsForSelectedDate.length > 0 ? (
+                  dailyTransactionsForSelectedDate.map(transaction => (
+                      <div key={transaction.id} className="flex items-center gap-4 group">
+                          <div className="flex-shrink-0">
+                              {transaction.type === 'income' ? <ArrowUpCircle className="w-6 h-6 text-green-500" /> : <ArrowDownCircle className="w-6 h-6 text-red-500" />}
+                          </div>
+                          <div className="flex-grow">
+                              <p className="font-medium">{transaction.description}</p>
+                               <div className="flex gap-1 flex-wrap mt-1">
+                                {transaction.tags.map(tag => (
+                                    <span key={tag} className="text-xs px-1.5 py-0.5 rounded-full bg-secondary text-secondary-foreground">{tag}</span>
+                                ))}
+                              </div>
+                          </div>
+                           <div className="text-right">
+                              <p className={cn('font-mono font-semibold', transaction.type === 'income' ? 'text-green-500' : 'text-red-500')}>
+                                {transaction.type === 'income' ? '+' : '-'}{transaction.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </p>
+                           </div>
+                           <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => openFormDialog(new Date(transaction.date), transaction)}><Edit className="w-4 h-4" /></Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="w-8 h-8 text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>This action cannot be undone. This will permanently delete this transaction.</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteTransaction(transaction.id)}>Delete</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                           </div>
+                      </div>
+                  ))
+              ) : (
+                  <p className="text-muted-foreground text-center py-8">Click "Add New Transaction" to get started.</p>
+              )}
+            </div>
+             <div className="mt-auto pt-4 border-t">
+                <Button onClick={closeListAndOpenForm} className="w-full">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add New Transaction
+                </Button>
+            </div>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>{selectedTransaction ? 'Edit Transaction' : 'Add Transaction'} for {selectedDate && format(selectedDate, 'MMMM d, yyyy')}</DialogTitle>
+                <DialogTitle>{selectedTransaction ? 'Edit Transaction' : 'Add Transaction'}</DialogTitle>
+                 <DialogDescription>{selectedDate && format(selectedDate, 'MMMM d, yyyy')}</DialogDescription>
             </DialogHeader>
             {selectedDate && (
                 <TransactionForm 
