@@ -1,6 +1,6 @@
 // This is a mock database service. In a real application, you would replace this with a connection to a real database like Firestore.
 'use server';
-import { Transaction } from '@/types';
+import { Transaction, PrivacySettings, PrivateContent } from '@/types';
 
 // Mock database
 let transactions: Transaction[] = [
@@ -11,19 +11,21 @@ let transactions: Transaction[] = [
     { id: '5', date: new Date(new Date().setDate(12)).toISOString(), description: 'Internet Bill', amount: 60, type: 'expense', tags: ['utilities'] },
 ];
 
+let privacySettings: PrivacySettings | null = null;
+let privateContent: PrivateContent[] = [];
+
+
+// Transactions
 export async function getTransactions(): Promise<Transaction[]> {
-    // In a real DB, you'd fetch from the database here.
     return Promise.resolve(transactions);
 }
 
 export async function addTransaction(transaction: Transaction): Promise<Transaction> {
-    // In a real DB, you'd insert a new document.
     transactions.push(transaction);
     return Promise.resolve(transaction);
 }
 
 export async function updateTransaction(id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>): Promise<Transaction | null> {
-    // In a real DB, you'd update a document.
     const index = transactions.findIndex(t => t.id === id);
     if (index !== -1) {
         transactions[index] = { ...transactions[index], ...updatedTransaction };
@@ -33,14 +35,35 @@ export async function updateTransaction(id: string, updatedTransaction: Partial<
 }
 
 export async function deleteTransaction(id: string): Promise<boolean> {
-    // In a real DB, you'd delete a document.
     const initialLength = transactions.length;
     transactions = transactions.filter(t => t.id !== id);
     return Promise.resolve(transactions.length < initialLength);
 }
 
 export async function deleteAllTransactions(): Promise<boolean> {
-    // In a real DB, you would delete all documents in a collection.
     transactions = [];
     return Promise.resolve(true);
+}
+
+
+// Privacy and Secure Storage
+export async function getPrivacySettings(): Promise<PrivacySettings | null> {
+    return Promise.resolve(privacySettings);
+}
+
+export async function savePrivacySettings(settings: PrivacySettings): Promise<void> {
+    // In a real app, you would hash the password before saving
+    privacySettings = settings;
+    return Promise.resolve();
+}
+
+export async function getPrivateData(): Promise<PrivateContent[]> {
+    const sortedData = [...privateContent].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return Promise.resolve(sortedData);
+}
+
+export async function savePrivateData(item: Omit<PrivateContent, 'id'>): Promise<PrivateContent> {
+    const newItem = { ...item, id: crypto.randomUUID() };
+    privateContent.push(newItem);
+    return Promise.resolve(newItem);
 }
