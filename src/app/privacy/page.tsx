@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
-import { Shield, Home, KeyRound, Lock, Unlock, Eye, EyeOff, Loader2, FileImage, StickyNote, CalendarDays, Clock } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Shield, Home, KeyRound, Lock, Unlock, Eye, EyeOff, Loader2, FileImage, StickyNote, CalendarDays, Clock, Settings } from 'lucide-react';
 import { 
     hasPrivacyPassword, 
     setPrivacyPassword, 
@@ -36,6 +37,15 @@ export default function PrivacyPage() {
   const [privateContent, setPrivateContent] = useState<PrivateContent[]>([]);
   const [newNote, setNewNote] = useState('');
   const [isPending, startTransition] = useTransition();
+
+  // Settings states
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [newUnlockDate, setNewUnlockDate] = useState<Date | undefined>(new Date());
+  const [newUnlockTime, setNewUnlockTime] = useState('12:00');
+  const [settingsError, setSettingsError] = useState('');
+
 
   const router = useRouter();
   const { toast } = useToast();
@@ -168,6 +178,36 @@ export default function PrivacyPage() {
       reader.readAsDataURL(file);
     }
   };
+  
+  const handleChangePassword = async () => {
+    if (newPassword.length < 4) {
+      setSettingsError('New password must be at least 4 characters long.');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setSettingsError('New passwords do not match.');
+      return;
+    }
+    await setPrivacyPassword(newPassword);
+    setSettingsError('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    toast({ title: 'Password Updated!', description: 'Your password has been changed successfully.' });
+  };
+  
+  const handleChangeUnlockDateTime = async () => {
+    if (!newUnlockDate || !newUnlockTime) {
+      setSettingsError('Invalid date or time.');
+      return;
+    }
+    const [hours, minutes] = newUnlockTime.split(':').map(Number);
+    const finalDateTime = new Date(newUnlockDate);
+    finalDateTime.setHours(hours, minutes, 0, 0);
+
+    await setPrivacyUnlockDateTime(finalDateTime);
+    setSettingsError('');
+    toast({ title: 'Unlock Credentials Updated!', description: 'Your secret date and time have been changed.' });
+  }
 
 
   if (privacyState === 'loading') {
@@ -192,7 +232,14 @@ export default function PrivacyPage() {
               <CardDescription>A secure area for your personal data.</CardDescription>
             </div>
           </div>
-          <Button variant="ghost" size="icon" onClick={() => router.push('/')}><Home className="w-5 h-5" /></Button>
+          <div className="flex items-center gap-2">
+              {privacyState === 'unlocked' && (
+                <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
+                    <Settings className="w-5 h-5" />
+                </Button>
+              )}
+              <Button variant="ghost" size="icon" onClick={() => router.push('/')}><Home className="w-5 h-5" /></Button>
+          </div>
         </CardHeader>
         <CardContent>
           {privacyState === 'setup_password' && (
@@ -377,6 +424,60 @@ export default function PrivacyPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+          <DialogContent>
+              <DialogHeader>
+                  <DialogTitle>Privacy Settings</DialogTitle>
+                  <DialogDescription>
+                      Update your security credentials here.
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-6 py-4">
+                  <div className="space-y-4">
+                      <Label className="font-semibold">Change Password</Label>
+                      <Input 
+                          type="password"
+                          placeholder="Enter new password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                      />
+                      <Input
+                          type="password"
+                          placeholder="Confirm new password"
+                          value={confirmNewPassword}
+                          onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      />
+                      <Button onClick={handleChangePassword} size="sm">Update Password</Button>
+                  </div>
+                  <div className="space-y-4">
+                      <Label className="font-semibold">Change Unlock Date & Time</Label>
+                      <div className="flex justify-center">
+                          <Calendar
+                              mode="single"
+                              selected={newUnlockDate}
+                              onSelect={setNewUnlockDate}
+                              className="rounded-md border"
+                          />
+                      </div>
+                      <Input
+                          type="time"
+                          value={newUnlockTime}
+                          onChange={(e) => setNewUnlockTime(e.target.value)}
+                          className="w-1/2 mx-auto text-center"
+                      />
+                      <Button onClick={handleChangeUnlockDateTime} size="sm" className="w-full">Update Date & Time</Button>
+                  </div>
+                  {settingsError && <p className="text-sm text-destructive text-center">{settingsError}</p>}
+              </div>
+              <DialogFooter>
+                  <DialogClose asChild>
+                      <Button variant="outline">Close</Button>
+                  </DialogClose>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
+      
       <div className="text-center mt-4">
         <Button variant="link" onClick={() => router.push('/')}>Back to Calendar</Button>
       </div>
