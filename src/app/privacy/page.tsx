@@ -80,12 +80,10 @@ export default function PrivacyPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <Label htmlFor="new-note">Add a new private note</Label>
             <Textarea id="new-note" value={newNote} onChange={(e) => { setNewNote(e.target.value); setNewPhoto(null); }} placeholder="Type your secure note here..."/>
           </div>
            <div className="text-center text-sm text-muted-foreground">OR</div>
           <div>
-              <Label htmlFor="photo-upload">Upload a private photo</Label>
               <div className="flex items-center gap-4">
                   <Input id="photo-upload" type="file" accept="image/*" onChange={handlePhotoUpload} className="flex-grow"/>
               </div>
@@ -94,7 +92,6 @@ export default function PrivacyPage() {
           <Button onClick={handleSaveContent} className="w-full">Save to Private Storage</Button>
           
           <div className="mt-8 space-y-4">
-              <h3 className="font-bold text-lg">Your Private Content</h3>
               {privateContent.length === 0 && <p className="text-muted-foreground">No private items stored yet.</p>}
               <div className="max-h-[300px] overflow-y-auto space-y-3 pr-2">
               {privateContent.map(item => (
