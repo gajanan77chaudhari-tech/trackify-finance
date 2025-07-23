@@ -74,7 +74,6 @@ export default function PrivacyPage() {
             <Shield className="w-8 h-8 text-primary" />
             <div>
               <CardTitle>Private Storage</CardTitle>
-              <CardDescription>Your secure area for notes and photos.</CardDescription>
             </div>
           </div>
            <Button variant="ghost" size="icon" onClick={() => router.push('/')}><Home className="w-5 h-5" /></Button>
