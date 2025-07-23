@@ -8,18 +8,28 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Shield, Home, KeyRound, Lock, Unlock, Eye, EyeOff, Loader2, FileImage, StickyNote } from 'lucide-react';
-import { hasPrivacyPassword, setPrivacyPassword, checkPrivacyPassword, getPrivateData, savePrivateData } from '@/services/db';
+import { Calendar } from '@/components/ui/calendar';
+import { Shield, Home, KeyRound, Lock, Unlock, Eye, EyeOff, Loader2, FileImage, StickyNote, CalendarDays } from 'lucide-react';
+import { 
+    hasPrivacyPassword, 
+    setPrivacyPassword, 
+    checkPrivacyPassword, 
+    getPrivateData, 
+    savePrivateData,
+    setPrivacyUnlockDate,
+    checkPrivacyUnlockDate
+} from '@/services/db';
 import { PrivateContent } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 
-type PrivacyState = 'loading' | 'setup' | 'locked' | 'unlocked';
+type PrivacyState = 'loading' | 'setup_password' | 'setup_date' | 'locked' | 'date_lock' | 'unlocked';
 
 export default function PrivacyPage() {
   const [privacyState, setPrivacyState] = useState<PrivacyState>('loading');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [unlockDate, setUnlockDate] = useState<Date | undefined>(new Date());
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [privateContent, setPrivateContent] = useState<PrivateContent[]>([]);
@@ -32,7 +42,7 @@ export default function PrivacyPage() {
   useEffect(() => {
     async function checkPassword() {
       const hasPass = await hasPrivacyPassword();
-      setPrivacyState(hasPass ? 'locked' : 'setup');
+      setPrivacyState(hasPass ? 'locked' : 'setup_password');
     }
     checkPassword();
   }, []);
@@ -47,21 +57,51 @@ export default function PrivacyPage() {
       return;
     }
     await setPrivacyPassword(password);
-    setPrivacyState('unlocked');
+    setPrivacyState('setup_date'); // Move to date setup
     setError('');
-    toast({ title: 'Password Set!', description: 'Your private storage is now protected.' });
+    toast({ title: 'Password Set!', description: 'Now select your secret unlock date.' });
   };
-
-  const handleUnlock = async () => {
-    const isCorrect = await checkPrivacyPassword(password);
-    if (isCorrect) {
+  
+  const handleSetDate = async () => {
+      if (!unlockDate) {
+          setError('Please select an unlock date.');
+          return;
+      }
+      await setPrivacyUnlockDate(unlockDate);
       setPrivacyState('unlocked');
       setError('');
-      loadPrivateContent();
+      toast({ title: 'Unlock Date Set!', description: 'Your private storage is now fully protected.' });
+  }
+
+  const handleUnlockPassword = async () => {
+    const isCorrect = await checkPrivacyPassword(password);
+    if (isCorrect) {
+      setPrivacyState('date_lock'); // Move to date lock
+      setError('');
     } else {
       setError('Incorrect password.');
     }
   };
+
+  const handleUnlockDate = async () => {
+    if (!unlockDate) {
+      setError('Please select a date to unlock.');
+      return;
+    }
+    const isCorrect = await checkPrivacyUnlockDate(unlockDate);
+    if (isCorrect) {
+        setPrivacyState('unlocked');
+        setError('');
+        loadPrivateContent();
+    } else {
+        setError('Incorrect unlock date selected.');
+        toast({
+            variant: "destructive",
+            title: "Access Denied",
+            description: "The date you selected is incorrect.",
+        })
+    }
+  }
   
   const loadPrivateContent = async () => {
       const data = await getPrivateData();
@@ -126,11 +166,11 @@ export default function PrivacyPage() {
           <Button variant="ghost" size="icon" onClick={() => router.push('/')}><Home className="w-5 h-5" /></Button>
         </CardHeader>
         <CardContent>
-          {privacyState === 'setup' && (
+          {privacyState === 'setup_password' && (
             <div className="space-y-4 text-center">
               <KeyRound className="w-12 h-12 mx-auto text-primary" />
-              <h3 className="text-xl font-semibold">Create Your Password</h3>
-              <p className="text-muted-foreground">Set a password to protect your private notes and photos.</p>
+              <h3 className="text-xl font-semibold">Step 1: Create Your Password</h3>
+              <p className="text-muted-foreground">Set a password to protect your private storage.</p>
               <div className="relative">
                   <Input 
                       type={showPassword ? 'text' : 'password'}
@@ -152,15 +192,34 @@ export default function PrivacyPage() {
                   />
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button onClick={handleSetPassword} className="w-full">Set Password</Button>
+              <Button onClick={handleSetPassword} className="w-full">Set Password & Continue</Button>
             </div>
           )}
+
+          {privacyState === 'setup_date' && (
+            <div className="space-y-4 text-center">
+              <CalendarDays className="w-12 h-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Step 2: Set Unlock Date</h3>
+              <p className="text-muted-foreground">Select a secret date. You will need this to unlock your storage.</p>
+              <div className="flex justify-center">
+                 <Calendar
+                    mode="single"
+                    selected={unlockDate}
+                    onSelect={setUnlockDate}
+                    className="rounded-md border"
+                  />
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Button onClick={handleSetDate} className="w-full" disabled={!unlockDate}>Finish Setup</Button>
+            </div>
+          )}
+
 
           {privacyState === 'locked' && (
              <div className="space-y-4 text-center">
               <Lock className="w-12 h-12 mx-auto text-primary" />
               <h3 className="text-xl font-semibold">Storage Locked</h3>
-              <p className="text-muted-foreground">Enter your password to unlock.</p>
+              <p className="text-muted-foreground">Enter your password to continue.</p>
                <div className="relative">
                  <Input 
                      type={showPassword ? 'text' : 'password'}
@@ -174,8 +233,28 @@ export default function PrivacyPage() {
                 </Button>
                </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button onClick={handleUnlock} className="w-full">
-                <Unlock className="mr-2 h-4 w-4" />
+              <Button onClick={handleUnlockPassword} className="w-full">
+                Continue
+              </Button>
+            </div>
+          )}
+
+          {privacyState === 'date_lock' && (
+             <div className="space-y-4 text-center">
+              <CalendarDays className="w-12 h-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Select Unlock Date</h3>
+              <p className="text-muted-foreground">Select your secret date to unlock.</p>
+              <div className="flex justify-center">
+                 <Calendar
+                    mode="single"
+                    selected={unlockDate}
+                    onSelect={setUnlockDate}
+                    className="rounded-md border"
+                  />
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Button onClick={handleUnlockDate} className="w-full" disabled={!unlockDate}>
+                 <Unlock className="mr-2 h-4 w-4" />
                 Unlock
               </Button>
             </div>

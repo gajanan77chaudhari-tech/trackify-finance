@@ -1,11 +1,13 @@
 // This is a mock database service. In a real application, you would replace this with a connection to a real database like Firestore.
 'use server';
 import { Transaction, PrivateContent } from '@/types';
+import { isSameDay } from 'date-fns';
 
 // Mock database
 let transactions: Transaction[] = [];
 let privateContent: PrivateContent[] = [];
 let privacyPassword: string | null = null;
+let privacyUnlockDate: Date | null = null;
 
 
 // Transactions
@@ -62,4 +64,14 @@ export async function setPrivacyPassword(password: string): Promise<void> {
 
 export async function checkPrivacyPassword(password: string): Promise<boolean> {
     return Promise.resolve(privacyPassword === password);
+}
+
+export async function setPrivacyUnlockDate(date: Date): Promise<void> {
+    privacyUnlockDate = date;
+    return Promise.resolve();
+}
+
+export async function checkPrivacyUnlockDate(date: Date): Promise<boolean> {
+    if (!privacyUnlockDate) return Promise.resolve(false);
+    return Promise.resolve(isSameDay(privacyUnlockDate, date));
 }
