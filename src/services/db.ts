@@ -4,8 +4,8 @@ import { Transaction, PrivateContent } from '@/types';
 
 // Mock database
 let transactions: Transaction[] = [];
-
 let privateContent: PrivateContent[] = [];
+let privacyPassword: string | null = null;
 
 
 // Transactions
@@ -45,8 +45,21 @@ export async function getPrivateData(): Promise<PrivateContent[]> {
     return Promise.resolve(sortedData);
 }
 
-export async function savePrivateData(item: Omit<PrivateContent, 'id'>): Promise<PrivateContent> {
-    const newItem = { ...item, id: crypto.randomUUID() };
+export async function savePrivateData(item: Omit<PrivateContent, 'id' | 'createdAt'>): Promise<PrivateContent> {
+    const newItem = { ...item, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
     privateContent.push(newItem);
     return Promise.resolve(newItem);
+}
+
+export async function hasPrivacyPassword(): Promise<boolean> {
+    return Promise.resolve(privacyPassword !== null);
+}
+
+export async function setPrivacyPassword(password: string): Promise<void> {
+    privacyPassword = password;
+    return Promise.resolve();
+}
+
+export async function checkPrivacyPassword(password: string): Promise<boolean> {
+    return Promise.resolve(privacyPassword === password);
 }
