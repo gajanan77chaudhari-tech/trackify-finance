@@ -3,13 +3,7 @@
 import { Transaction, PrivacySettings, PrivateContent } from '@/types';
 
 // Mock database
-let transactions: Transaction[] = [
-    { id: '1', date: new Date(new Date().setDate(2)).toISOString(), description: 'Salary', amount: 3500, type: 'income', tags: ['work', 'payroll'] },
-    { id: '2', date: new Date(new Date().setDate(2)).toISOString(), description: 'Rent', amount: 1200, type: 'expense', tags: ['housing'] },
-    { id: '3', date: new Date(new Date().setDate(5)).toISOString(), description: 'Groceries', amount: 150, type: 'expense', tags: ['food'] },
-    { id: '4', date: new Date(new Date().setDate(10)).toISOString(), description: 'Freelance Project', amount: 500, type: 'income', tags: ['side-hustle'] },
-    { id: '5', date: new Date(new Date().setDate(12)).toISOString(), description: 'Internet Bill', amount: 60, type: 'expense', tags: ['utilities'] },
-];
+let transactions: Transaction[] = [];
 
 let privacySettings: PrivacySettings | null = null;
 let privateContent: PrivateContent[] = [];
