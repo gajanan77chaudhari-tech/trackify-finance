@@ -209,7 +209,7 @@ export default function PrivacyPage() {
     toast({ title: 'Unlock Credentials Updated!', description: 'Your secret date and time have been changed.' });
   }
 
-  const showSettingsButton = !['loading', 'locked', 'setup_password'].includes(privacyState);
+  const showSettingsButton = !['loading', 'setup_password'].includes(privacyState);
 
   if (privacyState === 'loading') {
     return (
