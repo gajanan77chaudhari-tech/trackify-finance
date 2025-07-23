@@ -209,6 +209,7 @@ export default function PrivacyPage() {
     toast({ title: 'Unlock Credentials Updated!', description: 'Your secret date and time have been changed.' });
   }
 
+  const showSettingsButton = !['loading', 'locked', 'setup_password'].includes(privacyState);
 
   if (privacyState === 'loading') {
     return (
@@ -233,7 +234,7 @@ export default function PrivacyPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-              {privacyState === 'unlocked' && (
+              {showSettingsButton && (
                 <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
                     <Settings className="w-5 h-5" />
                 </Button>
