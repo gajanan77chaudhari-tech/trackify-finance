@@ -7,12 +7,6 @@ export type Transaction = {
   tags: string[];
 };
 
-export type PrivacySettings = {
-    password: string; // This should be a hash in a real app
-    unlockDate: string;
-    unlockTime: string;
-};
-
 export type PrivateContent = {
     id: string;
     type: 'note' | 'photo';

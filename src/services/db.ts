@@ -1,11 +1,10 @@
 // This is a mock database service. In a real application, you would replace this with a connection to a real database like Firestore.
 'use server';
-import { Transaction, PrivacySettings, PrivateContent } from '@/types';
+import { Transaction, PrivateContent } from '@/types';
 
 // Mock database
 let transactions: Transaction[] = [];
 
-let privacySettings: PrivacySettings | null = null;
 let privateContent: PrivateContent[] = [];
 
 
@@ -41,16 +40,6 @@ export async function deleteAllTransactions(): Promise<boolean> {
 
 
 // Privacy and Secure Storage
-export async function getPrivacySettings(): Promise<PrivacySettings | null> {
-    return Promise.resolve(privacySettings);
-}
-
-export async function savePrivacySettings(settings: PrivacySettings): Promise<void> {
-    // In a real app, you would hash the password before saving
-    privacySettings = settings;
-    return Promise.resolve();
-}
-
 export async function getPrivateData(): Promise<PrivateContent[]> {
     const sortedData = [...privateContent].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return Promise.resolve(sortedData);
