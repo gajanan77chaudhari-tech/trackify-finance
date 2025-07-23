@@ -9,27 +9,28 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
-import { Shield, Home, KeyRound, Lock, Unlock, Eye, EyeOff, Loader2, FileImage, StickyNote, CalendarDays } from 'lucide-react';
+import { Shield, Home, KeyRound, Lock, Unlock, Eye, EyeOff, Loader2, FileImage, StickyNote, CalendarDays, Clock } from 'lucide-react';
 import { 
     hasPrivacyPassword, 
     setPrivacyPassword, 
     checkPrivacyPassword, 
     getPrivateData, 
     savePrivateData,
-    setPrivacyUnlockDate,
-    checkPrivacyUnlockDate
+    setPrivacyUnlockDateTime,
+    checkPrivacyUnlockDateTime
 } from '@/services/db';
 import { PrivateContent } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 
-type PrivacyState = 'loading' | 'setup_password' | 'setup_date' | 'locked' | 'date_lock' | 'unlocked';
+type PrivacyState = 'loading' | 'setup_password' | 'setup_date' | 'setup_time' | 'locked' | 'date_lock' | 'time_lock' | 'unlocked';
 
 export default function PrivacyPage() {
   const [privacyState, setPrivacyState] = useState<PrivacyState>('loading');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [unlockDate, setUnlockDate] = useState<Date | undefined>(new Date());
+  const [unlockTime, setUnlockTime] = useState('12:00');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [privateContent, setPrivateContent] = useState<PrivateContent[]>([]);
@@ -67,11 +68,26 @@ export default function PrivacyPage() {
           setError('Please select an unlock date.');
           return;
       }
-      await setPrivacyUnlockDate(unlockDate);
+      setPrivacyState('setup_time');
+      setError('');
+      toast({ title: 'Date Set!', description: 'Finally, set your secret unlock time.' });
+  }
+
+  const handleSetTime = async () => {
+      if (!unlockDate || !unlockTime) {
+          setError('Invalid date or time.');
+          return;
+      }
+      const [hours, minutes] = unlockTime.split(':').map(Number);
+      const finalDateTime = new Date(unlockDate);
+      finalDateTime.setHours(hours, minutes, 0, 0);
+
+      await setPrivacyUnlockDateTime(finalDateTime);
       setPrivacyState('unlocked');
       setError('');
-      toast({ title: 'Unlock Date Set!', description: 'Your private storage is now fully protected.' });
+      toast({ title: 'Setup Complete!', description: 'Your private storage is now fully protected.' });
   }
+
 
   const handleUnlockPassword = async () => {
     const isCorrect = await checkPrivacyPassword(password);
@@ -88,17 +104,30 @@ export default function PrivacyPage() {
       setError('Please select a date to unlock.');
       return;
     }
-    const isCorrect = await checkPrivacyUnlockDate(unlockDate);
+    setPrivacyState('time_lock');
+    setError('');
+  }
+
+  const handleUnlockTime = async () => {
+    if (!unlockDate || !unlockTime) {
+      setError('Invalid date or time.');
+      return;
+    }
+    const [hours, minutes] = unlockTime.split(':').map(Number);
+    const finalDateTime = new Date(unlockDate);
+    finalDateTime.setHours(hours, minutes, 0, 0);
+
+    const isCorrect = await checkPrivacyUnlockDateTime(finalDateTime);
     if (isCorrect) {
         setPrivacyState('unlocked');
         setError('');
         loadPrivateContent();
     } else {
-        setError('Incorrect unlock date selected.');
+        setError('Incorrect date or time selected.');
         toast({
             variant: "destructive",
             title: "Access Denied",
-            description: "The date you selected is incorrect.",
+            description: "The date or time you selected is incorrect.",
         })
     }
   }
@@ -210,7 +239,25 @@ export default function PrivacyPage() {
                   />
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button onClick={handleSetDate} className="w-full" disabled={!unlockDate}>Finish Setup</Button>
+              <Button onClick={handleSetDate} className="w-full" disabled={!unlockDate}>Continue</Button>
+            </div>
+          )}
+
+           {privacyState === 'setup_time' && (
+            <div className="space-y-4 text-center">
+              <Clock className="w-12 h-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Step 3: Set Unlock Time</h3>
+              <p className="text-muted-foreground">Select a secret time. This is the final step.</p>
+              <div className="flex justify-center">
+                 <Input 
+                    type="time" 
+                    value={unlockTime} 
+                    onChange={(e) => setUnlockTime(e.target.value)} 
+                    className="w-1/2 text-center text-2xl p-2"
+                />
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Button onClick={handleSetTime} className="w-full" disabled={!unlockTime}>Finish Setup</Button>
             </div>
           )}
 
@@ -243,7 +290,7 @@ export default function PrivacyPage() {
              <div className="space-y-4 text-center">
               <CalendarDays className="w-12 h-12 mx-auto text-primary" />
               <h3 className="text-xl font-semibold">Select Unlock Date</h3>
-              <p className="text-muted-foreground">Select your secret date to unlock.</p>
+              <p className="text-muted-foreground">Select your secret date to continue.</p>
               <div className="flex justify-center">
                  <Calendar
                     mode="single"
@@ -254,8 +301,28 @@ export default function PrivacyPage() {
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button onClick={handleUnlockDate} className="w-full" disabled={!unlockDate}>
+                Continue
+              </Button>
+            </div>
+          )}
+
+          {privacyState === 'time_lock' && (
+             <div className="space-y-4 text-center">
+              <Clock className="w-12 h-12 mx-auto text-primary" />
+              <h3 className="text-xl font-semibold">Select Unlock Time</h3>
+              <p className="text-muted-foreground">Select your secret time to unlock.</p>
+              <div className="flex justify-center">
+                 <Input 
+                    type="time" 
+                    value={unlockTime} 
+                    onChange={(e) => setUnlockTime(e.target.value)} 
+                    className="w-1/2 text-center text-2xl p-2"
+                />
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <Button onClick={handleUnlockTime} className="w-full" disabled={!unlockTime}>
                  <Unlock className="mr-2 h-4 w-4" />
-                Unlock
+                Unlock Storage
               </Button>
             </div>
           )}
