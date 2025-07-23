@@ -188,14 +188,14 @@ export default function PrivacyPage() {
                 <div className="relative">
                   <Input id="unlock-password" type={showPassword ? 'text' : 'password'} value={unlockPassword} onChange={(e) => setUnlockPassword(e.target.value)} />
                    <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
-                        {showPassword ? <EyeOff /> : <Eye />}
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Unlock Date</Label>
-                  <Calendar mode="single" selected={unlockDate} onSelect={setUnlockDate} className="p-0" />
+                  <Calendar mode="single" selected={unlockDate} onSelect={setUnlockDate} className="p-0 border rounded-md" />
                 </div>
                 <div>
                   <Label htmlFor="unlock-time">Unlock Time</Label>
@@ -218,7 +218,7 @@ export default function PrivacyPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Set Unlock Date</Label>
-                  <Calendar mode="single" selected={unlockDate} onSelect={setUnlockDate} className="p-0" />
+                  <Calendar mode="single" selected={unlockDate} onSelect={setUnlockDate} className="p-0 border rounded-md" />
                 </div>
                 <div>
                   <Label htmlFor="time">Set Unlock Time</Label>
