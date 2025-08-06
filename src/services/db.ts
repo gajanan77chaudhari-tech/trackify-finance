@@ -41,37 +41,35 @@ export async function deleteAllTransactions(): Promise<boolean> {
 }
 
 
-// Privacy and Secure Storage
+// Privacy and Secure Storage - All functionality has been removed.
 export async function getPrivateData(): Promise<PrivateContent[]> {
-    const sortedData = [...privateContent].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return Promise.resolve(sortedData);
+    return Promise.resolve([]);
 }
 
 export async function savePrivateData(item: Omit<PrivateContent, 'id' | 'createdAt'>): Promise<PrivateContent> {
     const newItem = { ...item, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
-    privateContent.push(newItem);
+    // No longer saving
     return Promise.resolve(newItem);
 }
 
 export async function hasPrivacyPassword(): Promise<boolean> {
-    return Promise.resolve(privacyPassword !== null);
+    return Promise.resolve(false);
 }
 
 export async function setPrivacyPassword(password: string): Promise<void> {
-    privacyPassword = password;
+    privacyPassword = null;
     return Promise.resolve();
 }
 
 export async function checkPrivacyPassword(password: string): Promise<boolean> {
-    return Promise.resolve(privacyPassword === password);
+    return Promise.resolve(false);
 }
 
 export async function setPrivacyUnlockDateTime(date: Date): Promise<void> {
-    privacyUnlockDateTime = date;
+    privacyUnlockDateTime = null;
     return Promise.resolve();
 }
 
 export async function checkPrivacyUnlockDateTime(date: Date): Promise<boolean> {
-    if (!privacyUnlockDateTime) return Promise.resolve(false);
-    return Promise.resolve(isSameDay(privacyUnlockDateTime, date) && isSameMinute(privacyUnlockDateTime, date));
+    return Promise.resolve(false);
 }

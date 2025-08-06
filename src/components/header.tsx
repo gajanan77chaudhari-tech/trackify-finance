@@ -1,4 +1,4 @@
-import { Wallet, History, Shield } from 'lucide-react';
+import { Wallet, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -23,12 +23,6 @@ export function Header({ onHistoryClick }: HeaderProps) {
               <History className="mr-2 h-4 w-4" />
               View History
             </Button>
-            <Link href="/privacy" passHref>
-              <Button variant="outline">
-                <Shield className="mr-2 h-4 w-4" />
-                Privacy
-              </Button>
-            </Link>
         </div>
       </div>
     </header>
