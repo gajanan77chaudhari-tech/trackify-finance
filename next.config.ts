@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  transpilePackages: ['embla-carousel-react'],
 };
 
 export default nextConfig;
