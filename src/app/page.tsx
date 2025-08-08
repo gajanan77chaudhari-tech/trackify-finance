@@ -9,7 +9,7 @@ import { TransactionHistory } from '@/components/transaction-history';
 import { addTransaction, deleteTransaction, getTransactions, updateTransaction, deleteAllTransactions } from '@/services/db';
 
 
-export default function Home() {
+export default function Home({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isMounted, setIsMounted] = useState(false);
