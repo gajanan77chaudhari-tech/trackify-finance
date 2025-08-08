@@ -104,7 +104,7 @@ export function FinanceCalendar({ transactions, onTransactionChange, currentDate
         </div>
         <div className="grid grid-cols-7 border-t">
           {weekdays.map(day => (
-            <div key={day} className="text-center font-medium text-blue-600 dark:text-blue-400 p-2 border-b text-sm">
+            <div key={day} className="text-center font-medium bg-primary text-primary-foreground p-2 border-b text-sm">
               {day}
             </div>
           ))}
