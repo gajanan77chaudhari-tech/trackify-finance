@@ -8,7 +8,7 @@ interface HeaderProps {
 
 export function Header({ onHistoryClick }: HeaderProps) {
   return (
-    <header className="bg-primary text-primary-foreground">
+    <header style={{ backgroundColor: '#2E2EFF' }} className="text-primary-foreground">
       <div className="container mx-auto flex items-center justify-between gap-4 p-4 md:p-6">
         <div className="flex items-center gap-4">
           <AppLogo />
