@@ -104,7 +104,7 @@ export function FinanceCalendar({ transactions, onTransactionChange, currentDate
         </div>
         <div className="grid grid-cols-7 border-t">
           {weekdays.map(day => (
-            <div key={day} className="text-center font-medium bg-primary text-primary-foreground p-2 border-b text-sm">
+            <div key={day} className="text-center font-medium bg-primary text-white p-2 border-b text-sm">
               {day}
             </div>
           ))}
@@ -126,7 +126,7 @@ export function FinanceCalendar({ transactions, onTransactionChange, currentDate
                 <div className="flex justify-between items-start">
                   <span className={cn(
                     "text-sm font-semibold", 
-                     isToday(day) ? "text-white bg-green-500 rounded-full w-6 h-6 flex items-center justify-center" : "text-foreground"
+                     isToday(day) ? "text-white bg-green-500 rounded-full w-6 h-6 flex items-center justify-center" : isSameMonth(day, currentDate) ? "text-black" : "text-foreground"
                     )}>{format(day, 'd')}</span>
                 </div>
                 {dailyTransactions.length > 0 && (
